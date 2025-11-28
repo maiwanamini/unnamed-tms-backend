@@ -1,7 +1,7 @@
 {
   "name": "unnamed-tms-backend",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "main": "src/app.js",
   "scripts": {
     "dev": "nodemon index.js"
   },
@@ -19,8 +19,10 @@
   "homepage": "https://github.com/maiwanamini/unnamed-tms-backend#readme",
   "description": "",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.0.0"
   },
   "devDependencies": {
