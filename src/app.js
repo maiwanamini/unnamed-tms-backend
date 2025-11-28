@@ -4,11 +4,11 @@ import cors from "cors";
 import mongoose from "mongoose";
 
 // Routes
-import authRoutes from "@/routes/authRoutes.js";
-import userRoutes from "@/routes/userRoutes.js";
-import orderRoutes from "@/routes/orderRoutes.js";
-import stopRoutes from "@/routes/stopRoutes.js";
-import truckRoutes from "@/routes/truckRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import stopRoutes from "./routes/stopRoutes.js";
+import truckRoutes from "./routes/truckRoutes.js";
 
 dotenv.config();
 
