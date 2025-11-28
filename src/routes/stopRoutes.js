@@ -6,22 +6,23 @@ import {
   updateStop,
   deleteStop,
 } from "../controllers/stopController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET all stops
-router.get("/", getStops);
+router.get("/", protect, getStops);
 
 // GET single stop
-router.get("/:id", getStopById);
+router.get("/:id", protect, getStopById);
 
 // CREATE stop
-router.post("/", createStop);
+router.post("/", protect, createStop);
 
 // UPDATE stop
-router.put("/:id", updateStop);
+router.put("/:id", protect, updateStop);
 
 // DELETE stop
-router.delete("/:id", deleteStop);
+router.delete("/:id", protect, deleteStop);
 
 export default router;

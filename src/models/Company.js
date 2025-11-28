@@ -22,7 +22,6 @@ const companySchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: false,
     },
   },
   { timestamps: true }
