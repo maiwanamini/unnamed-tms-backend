@@ -1,22 +1,21 @@
-// controllers/userController.js
-const User = require("../models/userModel");
+import User from "../models/User.js";
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private (admin later, but open for now)
-const getAllUsers = async (req, res) => {
+// @desc Get all users
+// @route GET /api/users
+// @access Private (admin later, but open for now)
+export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // hide password
+    const users = await User.find().select("-password");
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// @desc    Get single user
-// @route   GET /api/users/:id
-// @access  Private
-const getUserById = async (req, res) => {
+// @desc Get single user
+// @route GET /api/users/:id
+// @access Private
+export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
 
@@ -30,10 +29,10 @@ const getUserById = async (req, res) => {
   }
 };
 
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private
-const updateUser = async (req, res) => {
+// @desc Update user
+// @route PUT /api/users/:id
+// @access Private
+export const updateUser = async (req, res) => {
   try {
     const { firstName, lastName, email } = req.body;
 
@@ -53,10 +52,10 @@ const updateUser = async (req, res) => {
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private
-const deleteUser = async (req, res) => {
+// @desc Delete user
+// @route DELETE /api/users/:id
+// @access Private
+export const deleteUser = async (req, res) => {
   try {
     const removed = await User.findByIdAndDelete(req.params.id);
 
@@ -68,11 +67,4 @@ const deleteUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-};
-
-module.exports = {
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
 };

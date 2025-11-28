@@ -1,5 +1,4 @@
-// controllers/stopController.js
-const Stop = require("../models/stopModel");
+import Stop from "../models/Stop.js";
 
 // @desc    Get all stops
 // @route   GET /api/stops
@@ -89,10 +88,4 @@ const deleteStop = async (req, res) => {
   }
 };
 
-module.exports = {
-  getStops,
-  getStopById,
-  createStop,
-  updateStop,
-  deleteStop,
-};
+export { getStops, getStopById, createStop, updateStop, deleteStop };

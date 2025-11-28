@@ -1,6 +1,5 @@
-// controllers/orderController.js
-const Order = require("../models/Order");
-const Stop = require("../models/Stop");
+import Order from "../models/Order.js";
+import Stop from "../models/Stop.js";
 
 // @desc    Get all orders
 // @route   GET /api/orders
@@ -81,10 +80,4 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-module.exports = {
-  getOrders,
-  getOrderById,
-  createOrder,
-  updateOrder,
-  deleteOrder,
-};
+export { getOrders, getOrderById, createOrder, updateOrder, deleteOrder };
