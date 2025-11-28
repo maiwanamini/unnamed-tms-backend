@@ -37,6 +37,8 @@ const stopSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+stopSchema.index({ order: 1, orderIndex: 1 }, { unique: true });
+
 const Stop = mongoose.model("Stop", stopSchema);
 
 export default Stop;
