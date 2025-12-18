@@ -38,15 +38,13 @@ userSchema.set("toJSON", { virtuals: true });
 userSchema.set("toObject", { virtuals: true });
 
 // hash password before saving to db
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-
-  next();
 });
 
 // compare entered password with hashed password

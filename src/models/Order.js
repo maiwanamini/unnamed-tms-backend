@@ -54,8 +54,8 @@ const orderSchema = new mongoose.Schema(
 // ------------------------------------------
 // AUTO‑GENERATE ORDER NUMBER (O-01, O-02,...)
 // ------------------------------------------
-orderSchema.pre("validate", async function (next) {
-  if (!this.isNew) return next(); // Only for new orders
+orderSchema.pre("validate", async function () {
+  if (!this.isNew) return; // Only for new orders
 
   try {
     // Get the highest existing orderIndex
@@ -70,10 +70,8 @@ orderSchema.pre("validate", async function (next) {
 
     // Format orderNumber as O-01, O-02, O-03...
     this.orderNumber = `O-${String(nextIndex).padStart(2, "0")}`;
-
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 
