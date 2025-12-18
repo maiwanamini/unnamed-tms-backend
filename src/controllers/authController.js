@@ -48,40 +48,9 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    // DEBUG: log incoming and stored values to help diagnose compare failures
-    console.log("Login attempt:", { email });
-    console.log(
-      "Provided password length:",
-      password ? password.length : 0,
-      "type:",
-      typeof password
-    );
-    console.log(
-      "Stored password hash preview:",
-      user.password ? `${user.password.slice(0, 6)}...` : "<none>",
-      "(len=",
-      user.password ? user.password.length : 0,
-      ")"
-    );
-    console.log("Stored full hash:", user.password);
-    try {
-      console.log(
-        "Stored hash startsWith $2:",
-        typeof user.password === "string" && user.password.startsWith("$2")
-      );
-    } catch (e) {
-      console.log("startsWith check error:", e.message);
-    }
-
     // compare passwords
     const match = await bcrypt.compare(password, user.password);
-    console.log("bcrypt.compare result:", match);
-    try {
-      const sync = bcrypt.compareSync(password, user.password);
-      console.log("bcrypt.compareSync result:", sync);
-    } catch (err) {
-      console.log("compareSync error:", err && err.message);
-    }
+
     if (!match) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
