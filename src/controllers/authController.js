@@ -63,10 +63,25 @@ export const loginUser = async (req, res) => {
       user.password ? user.password.length : 0,
       ")"
     );
+    console.log("Stored full hash:", user.password);
+    try {
+      console.log(
+        "Stored hash startsWith $2:",
+        typeof user.password === "string" && user.password.startsWith("$2")
+      );
+    } catch (e) {
+      console.log("startsWith check error:", e.message);
+    }
 
     // compare passwords
     const match = await bcrypt.compare(password, user.password);
     console.log("bcrypt.compare result:", match);
+    try {
+      const sync = bcrypt.compareSync(password, user.password);
+      console.log("bcrypt.compareSync result:", sync);
+    } catch (err) {
+      console.log("compareSync error:", err && err.message);
+    }
     if (!match) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
