@@ -36,7 +36,10 @@ const createOrder = async (req, res) => {
     const newOrder = await Order.create(req.body);
     res.status(201).json(newOrder);
   } catch (error) {
-    res.status(400).json({ message: "Invalid order data" });
+    console.log("Create order error:", error.message);
+    res
+      .status(400)
+      .json({ message: "Invalid order data", error: error.message });
   }
 };
 
