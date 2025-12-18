@@ -35,13 +35,24 @@ const getStopById = async (req, res) => {
 // @access  Private
 const createStop = async (req, res) => {
   try {
-    const { order, address, orderIndex, note } = req.body;
+    const {
+      order,
+      type,
+      locationName,
+      address,
+      city,
+      postalCode,
+      plannedTime,
+    } = req.body;
 
     const stop = await Stop.create({
       order,
+      type,
+      locationName,
       address,
-      orderIndex,
-      note,
+      city,
+      postalCode,
+      plannedTime,
     });
 
     res.status(201).json(stop);
