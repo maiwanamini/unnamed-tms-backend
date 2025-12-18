@@ -11,16 +11,12 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "Email already in use." });
     }
 
-    // hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // create user
+    // create user (password will be hashed by the User model pre-save hook)
     const user = await User.create({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      password,
     });
 
     // generate token
@@ -52,8 +48,25 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
+    // DEBUG: log incoming and stored values to help diagnose compare failures
+    console.log("Login attempt:", { email });
+    console.log(
+      "Provided password length:",
+      password ? password.length : 0,
+      "type:",
+      typeof password
+    );
+    console.log(
+      "Stored password hash preview:",
+      user.password ? `${user.password.slice(0, 6)}...` : "<none>",
+      "(len=",
+      user.password ? user.password.length : 0,
+      ")"
+    );
+
     // compare passwords
     const match = await bcrypt.compare(password, user.password);
+    console.log("bcrypt.compare result:", match);
     if (!match) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
