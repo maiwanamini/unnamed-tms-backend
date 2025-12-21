@@ -7,6 +7,10 @@ const stopSchema = new mongoose.Schema(
       ref: "Order",
       required: true,
     },
+    orderIndex: {
+      type: Number,
+      required: true,
+    },
     type: {
       type: String,
       enum: ["pickup", "delivery"],
