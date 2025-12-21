@@ -1,11 +1,17 @@
 import Stop from "../models/Stop.js";
 
-// @desc    Get all stops
-// @route   GET /api/stops
+// @desc    Get all stops for a specific order
+// @route   GET /api/stops?order=:orderId or GET /api/orders/:orderId/stops
 // @access  Private
 const getStops = async (req, res) => {
   try {
-    const stops = await Stop.find().sort({ orderIndex: 1 });
+    const { order } = req.query;
+
+    if (!order) {
+      return res.status(400).json({ message: "Order ID is required" });
+    }
+
+    const stops = await Stop.find({ order }).sort({ orderIndex: 1 });
     res.status(200).json(stops);
   } catch (error) {
     res
@@ -36,7 +42,7 @@ const getStopById = async (req, res) => {
 const createStop = async (req, res) => {
   try {
     const {
-      order,
+      orderId,
       type,
       locationName,
       address,
@@ -46,7 +52,7 @@ const createStop = async (req, res) => {
     } = req.body;
 
     const stop = await Stop.create({
-      order,
+      order: orderId,
       type,
       locationName,
       address,
@@ -54,6 +60,13 @@ const createStop = async (req, res) => {
       postalCode,
       plannedTime,
     });
+
+    // 2. Push stop ID into order.stops
+    await Order.findByIdAndUpdate(
+      orderId,
+      { $push: { stops: stop._id } },
+      { new: true }
+    );
 
     res.status(201).json(stop);
   } catch (error) {

@@ -18,7 +18,7 @@ const getOrders = async (req, res) => {
 // @access  Private
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("stops");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
