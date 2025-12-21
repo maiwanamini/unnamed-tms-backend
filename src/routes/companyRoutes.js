@@ -5,6 +5,8 @@ import {
   createCompany,
   updateCompany,
   deleteCompany,
+  addRecipients,
+  removeRecipient,
 } from "../controllers/companyController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -24,5 +26,11 @@ router.put("/:id", protect, updateCompany);
 
 // DELETE company
 router.delete("/:id", protect, deleteCompany);
+
+// ADD recipients to company
+router.post("/:id/recipients", protect, addRecipients);
+
+// REMOVE a recipient from company
+router.delete("/:id/recipients/:userId", protect, removeRecipient);
 
 export default router;

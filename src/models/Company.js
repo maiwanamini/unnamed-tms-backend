@@ -23,6 +23,12 @@ const companySchema = new mongoose.Schema(
     address: {
       type: String,
     },
+    recipients: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
