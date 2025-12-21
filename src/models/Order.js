@@ -24,9 +24,6 @@ const orderSchema = new mongoose.Schema(
     customerPhone: {
       type: String,
     },
-    note: {
-      type: String,
-    },
     date: {
       type: Date,
       required: true,
