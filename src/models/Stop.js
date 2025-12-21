@@ -37,6 +37,9 @@ const stopSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    note: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
