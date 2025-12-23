@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getCurrentUser,
   getAllUsers,
   getUserById,
   updateUser,
@@ -8,6 +9,9 @@ import {
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// GET current user (protected)
+router.get("/me", protect, getCurrentUser);
 
 // GET all users (protected)
 router.get("/", protect, getAllUsers);
