@@ -44,6 +44,15 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     stops: [{ type: mongoose.Schema.Types.ObjectId, ref: "Stop" }],
+    extraInfo: {
+      drivenForCompany: { type: String, default: null },
+      startTime: { type: Date, default: null },
+      endTime: { type: Date, default: null },
+      startKilometers: { type: Number, default: null },
+      endKilometers: { type: Number, default: null },
+      proofImageUrl: { type: String, default: null },
+      proofImagePublicId: { type: String, default: null },
+    },
   },
   { timestamps: true }
 );
