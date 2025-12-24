@@ -1,5 +1,6 @@
 import Order from "../models/Order.js";
 import Stop from "../models/Stop.js";
+import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
 
 // @desc    Get all orders
 // @route   GET /api/orders
@@ -63,6 +64,69 @@ const updateOrder = async (req, res) => {
   }
 };
 
+// @desc    Add or update extra order info + optional proof image
+// @route   PUT /api/orders/:id/extra-info
+// @access  Private
+const updateOrderExtraInfo = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    const {
+      drivenForCompany,
+      startTime,
+      endTime,
+      startKilometers,
+      endKilometers,
+    } = req.body;
+
+    const extraInfoUpdates = {
+      drivenForCompany,
+      startTime,
+      endTime,
+      startKilometers,
+      endKilometers,
+    };
+
+    let proofImageUrl;
+    let proofImagePublicId;
+
+    if (req.file && req.file.buffer) {
+      if (order.extraInfo?.proofImagePublicId) {
+        await deleteImage(order.extraInfo.proofImagePublicId);
+      }
+
+      const uploadResult = await uploadImageBuffer(
+        req.file.buffer,
+        `orders/${order._id}`
+      );
+
+      proofImageUrl = uploadResult.url;
+      proofImagePublicId = uploadResult.publicId;
+    }
+
+    const cleanedExtraInfo = { ...(order.extraInfo || {}) };
+    Object.entries(extraInfoUpdates).forEach(([key, value]) => {
+      if (value !== undefined) cleanedExtraInfo[key] = value;
+    });
+
+    if (proofImageUrl && proofImagePublicId) {
+      cleanedExtraInfo.proofImageUrl = proofImageUrl;
+      cleanedExtraInfo.proofImagePublicId = proofImagePublicId;
+    }
+
+    order.extraInfo = cleanedExtraInfo;
+
+    await order.save();
+
+    res.status(200).json(order);
+  } catch (error) {
+    console.error("Update extra info error:", error.message);
+    res.status(400).json({ message: "Failed to update extra info" });
+  }
+};
+
 // @desc    Delete order + delete related stops
 // @route   DELETE /api/orders/:id
 // @access  Private (admin/dashboard)
@@ -83,4 +147,11 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-export { getOrders, getOrderById, createOrder, updateOrder, deleteOrder };
+export {
+  getOrders,
+  getOrderById,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+  updateOrderExtraInfo,
+};
