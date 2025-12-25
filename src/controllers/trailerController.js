@@ -6,7 +6,10 @@ import Truck from "../models/Truck.js";
 // @access  Private
 export const getTrailers = async (req, res) => {
   try {
-    const trailers = await Trailer.find().populate("truck");
+    const trailers = await Trailer.find().populate({
+      path: "truck",
+      populate: { path: "driver", select: "-password" },
+    });
     res.status(200).json(trailers);
   } catch (error) {
     res
@@ -20,7 +23,10 @@ export const getTrailers = async (req, res) => {
 // @access  Private
 export const getTrailerById = async (req, res) => {
   try {
-    const trailer = await Trailer.findById(req.params.id).populate("truck");
+    const trailer = await Trailer.findById(req.params.id).populate({
+      path: "truck",
+      populate: { path: "driver", select: "-password" },
+    });
 
     if (!trailer) return res.status(404).json({ message: "Trailer not found" });
 

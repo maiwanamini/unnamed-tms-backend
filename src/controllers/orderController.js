@@ -7,7 +7,11 @@ import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
 // @access  Private
 const getOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ orderNumber: 1 });
+    const orders = await Order.find()
+      .sort({ orderNumber: 1 })
+      .populate("truck")
+      .populate("driver", "-password")
+      .populate("stops");
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch orders" });
@@ -19,7 +23,10 @@ const getOrders = async (req, res) => {
 // @access  Private
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate("stops");
+    const order = await Order.findById(req.params.id)
+      .populate("truck")
+      .populate("driver", "-password")
+      .populate("stops");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
