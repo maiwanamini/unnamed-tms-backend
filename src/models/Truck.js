@@ -16,14 +16,31 @@ const truckSchema = new mongoose.Schema(
     year: {
       type: Number,
     },
+    type: {
+      type: String,
+      enum: [
+        "Tractor unit",
+        "Rigid / box truck",
+        "Refrigerated (reefer) truck",
+        "Flatbed truck",
+        "Tanker truck",
+        "Tip truck / dumper",
+        "Van (light commercial)",
+      ],
+    },
     status: {
       type: String,
-      enum: ["available", "in-use", "maintenance"],
-      default: "available",
+      enum: ["active", "inactive"],
+      default: "inactive",
     },
     driver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
+    },
+    trailer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trailer",
       default: null,
     },
   },

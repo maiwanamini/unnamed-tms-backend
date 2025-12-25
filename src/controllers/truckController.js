@@ -1,12 +1,15 @@
 import Truck from "../models/Truck.js";
 import User from "../models/User.js";
+import Trailer from "../models/Trailer.js";
 
 // @desc    Get all trucks
 // @route   GET /api/trucks
 // @access  Private
 export const getTrucks = async (req, res) => {
   try {
-    const trucks = await Truck.find().populate("driver", "-password");
+    const trucks = await Truck.find()
+      .populate("driver", "-password")
+      .populate("trailer");
     res.status(200).json(trucks);
   } catch (error) {
     res
@@ -20,10 +23,9 @@ export const getTrucks = async (req, res) => {
 // @access  Private
 export const getTruckById = async (req, res) => {
   try {
-    const truck = await Truck.findById(req.params.id).populate(
-      "driver",
-      "-password"
-    );
+    const truck = await Truck.findById(req.params.id)
+      .populate("driver", "-password")
+      .populate("trailer");
 
     if (!truck) return res.status(404).json({ message: "Truck not found" });
 
@@ -76,10 +78,25 @@ export const updateTruck = async (req, res) => {
       }
     }
 
+    // Handle trailer assignment changes
+    const oldTrailerId = truck.trailer;
+    const newTrailerId = req.body.trailer;
+
+    if (oldTrailerId?.toString() !== newTrailerId?.toString()) {
+      if (oldTrailerId) {
+        await Trailer.findByIdAndUpdate(oldTrailerId, { truck: null });
+      }
+      if (newTrailerId) {
+        await Trailer.findByIdAndUpdate(newTrailerId, { truck: req.params.id });
+      }
+    }
+
     // Update truck
     Object.assign(truck, req.body);
     const updatedTruck = await truck.save();
-    const populatedTruck = await updatedTruck.populate("driver", "-password");
+    const populatedTruck = await updatedTruck
+      .populate("driver", "-password")
+      .populate("trailer");
 
     res.status(200).json(populatedTruck);
   } catch (error) {
@@ -103,6 +120,11 @@ export const deleteTruck = async (req, res) => {
     // Remove truck reference from driver
     if (truck.driver) {
       await User.findByIdAndUpdate(truck.driver, { truck: null });
+    }
+
+    // Remove truck reference from trailer
+    if (truck.trailer) {
+      await Trailer.findByIdAndUpdate(truck.trailer, { truck: null });
     }
 
     res.status(200).json({ message: "Truck deleted successfully" });
