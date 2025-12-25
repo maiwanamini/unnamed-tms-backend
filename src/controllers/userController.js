@@ -10,7 +10,10 @@ export const getCurrentUser = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    res.status(200).json(req.user);
+    const user = await User.findById(req.user._id)
+      .select("-password")
+      .populate("truck");
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -21,7 +24,7 @@ export const getCurrentUser = async (req, res) => {
 // @access Private (admin later, but open for now)
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().select("-password").populate("truck");
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -33,7 +36,9 @@ export const getAllUsers = async (req, res) => {
 // @access Private
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id)
+      .select("-password")
+      .populate("truck");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
