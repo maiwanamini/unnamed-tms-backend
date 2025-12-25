@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlenght: 8,
     },
+    truck: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Truck",
+      default: null,
+    },
   },
   { timestamps: true }
 );
