@@ -5,7 +5,7 @@ import Partner from "../models/Partner.js";
 // @access  Private
 export const getPartners = async (req, res) => {
   try {
-    const partners = await Partner.find().sort({ createdAt: -1 });
+    const partners = await Partner.find({ company: req.user.company }).sort({ createdAt: -1 });
     res.status(200).json(partners);
   } catch (error) {
     res
@@ -19,7 +19,7 @@ export const getPartners = async (req, res) => {
 // @access  Private
 export const getPartnerById = async (req, res) => {
   try {
-    const partner = await Partner.findById(req.params.id);
+    const partner = await Partner.findOne({ _id: req.params.id, company: req.user.company });
     if (!partner) return res.status(404).json({ message: "Partner not found" });
 
     res.status(200).json(partner);
@@ -41,7 +41,7 @@ export const createPartner = async (req, res) => {
       return res.status(400).json({ message: "Name is required" });
     }
 
-    const partner = await Partner.create({ name });
+    const partner = await Partner.create({ name, company: req.user.company });
 
     res.status(201).json(partner);
   } catch (error) {
@@ -56,10 +56,14 @@ export const createPartner = async (req, res) => {
 // @access  Private
 export const updatePartner = async (req, res) => {
   try {
-    const partner = await Partner.findByIdAndUpdate(req.params.id, req.body, {
+    const partner = await Partner.findOneAndUpdate(
+      { _id: req.params.id, company: req.user.company },
+      req.body,
+      {
       new: true,
       runValidators: true,
-    });
+      }
+    );
 
     if (!partner) return res.status(404).json({ message: "Partner not found" });
 
@@ -76,7 +80,7 @@ export const updatePartner = async (req, res) => {
 // @access  Private
 export const deletePartner = async (req, res) => {
   try {
-    const partner = await Partner.findByIdAndDelete(req.params.id);
+    const partner = await Partner.findOneAndDelete({ _id: req.params.id, company: req.user.company });
 
     if (!partner) return res.status(404).json({ message: "Partner not found" });
 

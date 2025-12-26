@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const stopSchema = new mongoose.Schema(
   {
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+      index: true,
+    },
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
@@ -41,11 +47,15 @@ const stopSchema = new mongoose.Schema(
     note: {
       type: String,
     },
+    reference: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
 stopSchema.index({ order: 1, orderIndex: 1 }, { unique: true });
+stopSchema.index({ company: 1, order: 1, orderIndex: 1 }, { unique: true, sparse: true });
 
 const Stop = mongoose.model("Stop", stopSchema);
 

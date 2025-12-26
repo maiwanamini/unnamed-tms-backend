@@ -2,10 +2,16 @@ import mongoose from "mongoose";
 
 const truckSchema = new mongoose.Schema(
   {
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+      index: true,
+    },
     licensePlate: {
       type: String,
       required: true,
-      unique: true,
+      // unique handled per-company via indexes
     },
     brand: {
       type: String,
@@ -46,6 +52,8 @@ const truckSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+truckSchema.index({ company: 1, licensePlate: 1 }, { unique: true, sparse: true });
 
 const Truck = mongoose.model("Truck", truckSchema);
 

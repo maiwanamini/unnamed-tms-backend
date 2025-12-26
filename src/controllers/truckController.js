@@ -7,7 +7,7 @@ import Trailer from "../models/Trailer.js";
 // @access  Private
 export const getTrucks = async (req, res) => {
   try {
-    const trucks = await Truck.find()
+    const trucks = await Truck.find({ company: req.user.company })
       .populate("driver", "-password")
       .populate("trailer");
     res.status(200).json(trucks);
@@ -23,7 +23,7 @@ export const getTrucks = async (req, res) => {
 // @access  Private
 export const getTruckById = async (req, res) => {
   try {
-    const truck = await Truck.findById(req.params.id)
+    const truck = await Truck.findOne({ _id: req.params.id, company: req.user.company })
       .populate("driver", "-password")
       .populate("trailer");
 
@@ -42,7 +42,23 @@ export const getTruckById = async (req, res) => {
 // @access  Private
 export const createTruck = async (req, res) => {
   try {
-    const truck = await Truck.create(req.body);
+    const { driver, trailer, ...rest } = req.body || {};
+
+    if (driver) {
+      const driverDoc = await User.findOne({ _id: driver, company: req.user.company });
+      if (!driverDoc) {
+        return res.status(400).json({ message: "Invalid driver for company" });
+      }
+    }
+
+    if (trailer) {
+      const trailerDoc = await Trailer.findOne({ _id: trailer, company: req.user.company });
+      if (!trailerDoc) {
+        return res.status(400).json({ message: "Invalid trailer for company" });
+      }
+    }
+
+    const truck = await Truck.create({ ...rest, driver: driver || null, trailer: trailer || null, company: req.user.company });
     res.status(201).json(truck);
   } catch (error) {
     res
@@ -56,7 +72,7 @@ export const createTruck = async (req, res) => {
 // @access  Private
 export const updateTruck = async (req, res) => {
   try {
-    const truck = await Truck.findById(req.params.id);
+    const truck = await Truck.findOne({ _id: req.params.id, company: req.user.company });
 
     if (!truck) {
       return res.status(404).json({ message: "Truck not found" });
@@ -66,15 +82,28 @@ export const updateTruck = async (req, res) => {
     const oldDriverId = truck.driver;
     const newDriverId = req.body.driver;
 
+    if (newDriverId) {
+      const newDriver = await User.findOne({ _id: newDriverId, company: req.user.company });
+      if (!newDriver) {
+        return res.status(400).json({ message: "Invalid driver for company" });
+      }
+    }
+
     // If driver is being changed
     if (oldDriverId?.toString() !== newDriverId?.toString()) {
       // Remove truck from old driver
       if (oldDriverId) {
-        await User.findByIdAndUpdate(oldDriverId, { truck: null });
+        await User.findOneAndUpdate(
+          { _id: oldDriverId, company: req.user.company },
+          { truck: null }
+        );
       }
       // Assign truck to new driver
       if (newDriverId) {
-        await User.findByIdAndUpdate(newDriverId, { truck: req.params.id });
+        await User.findOneAndUpdate(
+          { _id: newDriverId, company: req.user.company },
+          { truck: req.params.id }
+        );
       }
     }
 
@@ -82,12 +111,25 @@ export const updateTruck = async (req, res) => {
     const oldTrailerId = truck.trailer;
     const newTrailerId = req.body.trailer;
 
+    if (newTrailerId) {
+      const newTrailer = await Trailer.findOne({ _id: newTrailerId, company: req.user.company });
+      if (!newTrailer) {
+        return res.status(400).json({ message: "Invalid trailer for company" });
+      }
+    }
+
     if (oldTrailerId?.toString() !== newTrailerId?.toString()) {
       if (oldTrailerId) {
-        await Trailer.findByIdAndUpdate(oldTrailerId, { truck: null });
+        await Trailer.findOneAndUpdate(
+          { _id: oldTrailerId, company: req.user.company },
+          { truck: null }
+        );
       }
       if (newTrailerId) {
-        await Trailer.findByIdAndUpdate(newTrailerId, { truck: req.params.id });
+        await Trailer.findOneAndUpdate(
+          { _id: newTrailerId, company: req.user.company },
+          { truck: req.params.id }
+        );
       }
     }
 
@@ -111,7 +153,7 @@ export const updateTruck = async (req, res) => {
 // @access  Private
 export const deleteTruck = async (req, res) => {
   try {
-    const truck = await Truck.findByIdAndDelete(req.params.id);
+    const truck = await Truck.findOneAndDelete({ _id: req.params.id, company: req.user.company });
 
     if (!truck) {
       return res.status(404).json({ message: "Truck not found" });
@@ -119,12 +161,18 @@ export const deleteTruck = async (req, res) => {
 
     // Remove truck reference from driver
     if (truck.driver) {
-      await User.findByIdAndUpdate(truck.driver, { truck: null });
+      await User.findOneAndUpdate(
+        { _id: truck.driver, company: req.user.company },
+        { truck: null }
+      );
     }
 
     // Remove truck reference from trailer
     if (truck.trailer) {
-      await Trailer.findByIdAndUpdate(truck.trailer, { truck: null });
+      await Trailer.findOneAndUpdate(
+        { _id: truck.trailer, company: req.user.company },
+        { truck: null }
+      );
     }
 
     res.status(200).json({ message: "Truck deleted successfully" });

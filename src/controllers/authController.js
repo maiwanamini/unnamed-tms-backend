@@ -17,6 +17,7 @@ export const registerUser = async (req, res) => {
       lastName,
       email,
       password,
+      role: "admin",
     });
 
     // generate token
@@ -31,6 +32,8 @@ export const registerUser = async (req, res) => {
         lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
+        role: user.role,
+        company: user.company,
       },
     });
   } catch (error) {
@@ -66,6 +69,8 @@ export const loginUser = async (req, res) => {
         lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
+        role: user.role,
+        company: user.company,
       },
     });
   } catch (error) {

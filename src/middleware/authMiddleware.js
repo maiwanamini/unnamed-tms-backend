@@ -29,3 +29,11 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
+
+export const requireCompany = (req, res, next) => {
+  if (!req.user?.company) {
+    return res.status(403).json({ message: "Company required" });
+  }
+
+  next();
+};

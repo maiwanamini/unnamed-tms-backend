@@ -6,7 +6,7 @@ import Truck from "../models/Truck.js";
 // @access  Private
 export const getTrailers = async (req, res) => {
   try {
-    const trailers = await Trailer.find().populate({
+    const trailers = await Trailer.find({ company: req.user.company }).populate({
       path: "truck",
       populate: { path: "driver", select: "-password" },
     });
@@ -23,7 +23,7 @@ export const getTrailers = async (req, res) => {
 // @access  Private
 export const getTrailerById = async (req, res) => {
   try {
-    const trailer = await Trailer.findById(req.params.id).populate({
+    const trailer = await Trailer.findOne({ _id: req.params.id, company: req.user.company }).populate({
       path: "truck",
       populate: { path: "driver", select: "-password" },
     });
@@ -43,7 +43,16 @@ export const getTrailerById = async (req, res) => {
 // @access  Private
 export const createTrailer = async (req, res) => {
   try {
-    const trailer = await Trailer.create(req.body);
+    const { truck, ...rest } = req.body || {};
+
+    if (truck) {
+      const truckDoc = await Truck.findOne({ _id: truck, company: req.user.company });
+      if (!truckDoc) {
+        return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
+    const trailer = await Trailer.create({ ...rest, truck: truck || null, company: req.user.company });
     res.status(201).json(trailer);
   } catch (error) {
     res
@@ -57,7 +66,7 @@ export const createTrailer = async (req, res) => {
 // @access  Private
 export const updateTrailer = async (req, res) => {
   try {
-    const trailer = await Trailer.findById(req.params.id);
+    const trailer = await Trailer.findOne({ _id: req.params.id, company: req.user.company });
 
     if (!trailer) {
       return res.status(404).json({ message: "Trailer not found" });
@@ -66,14 +75,27 @@ export const updateTrailer = async (req, res) => {
     const oldTruckId = trailer.truck;
     const newTruckId = req.body.truck;
 
+    if (newTruckId) {
+      const newTruck = await Truck.findOne({ _id: newTruckId, company: req.user.company });
+      if (!newTruck) {
+        return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
     if (oldTruckId?.toString() !== newTruckId?.toString()) {
       // Clear old truck's trailer link
       if (oldTruckId) {
-        await Truck.findByIdAndUpdate(oldTruckId, { trailer: null });
+        await Truck.findOneAndUpdate(
+          { _id: oldTruckId, company: req.user.company },
+          { trailer: null }
+        );
       }
       // Set new truck's trailer link
       if (newTruckId) {
-        await Truck.findByIdAndUpdate(newTruckId, { trailer: req.params.id });
+        await Truck.findOneAndUpdate(
+          { _id: newTruckId, company: req.user.company },
+          { trailer: req.params.id }
+        );
       }
     }
 
@@ -94,7 +116,7 @@ export const updateTrailer = async (req, res) => {
 // @access  Private
 export const deleteTrailer = async (req, res) => {
   try {
-    const trailer = await Trailer.findByIdAndDelete(req.params.id);
+    const trailer = await Trailer.findOneAndDelete({ _id: req.params.id, company: req.user.company });
 
     if (!trailer) {
       return res.status(404).json({ message: "Trailer not found" });
@@ -102,7 +124,10 @@ export const deleteTrailer = async (req, res) => {
 
     // Clear truck reference if present
     if (trailer?.truck) {
-      await Truck.findByIdAndUpdate(trailer.truck, { trailer: null });
+      await Truck.findOneAndUpdate(
+        { _id: trailer.truck, company: req.user.company },
+        { trailer: null }
+      );
     }
 
     res.status(200).json({ message: "Trailer deleted successfully" });

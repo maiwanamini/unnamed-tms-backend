@@ -1,5 +1,7 @@
 import Order from "../models/Order.js";
 import Stop from "../models/Stop.js";
+import Truck from "../models/Truck.js";
+import User from "../models/User.js";
 import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
 
 // @desc    Get all orders
@@ -7,7 +9,7 @@ import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
 // @access  Private
 const getOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
+    const orders = await Order.find({ company: req.user.company })
       .sort({ orderNumber: 1 })
       .populate("truck")
       .populate("driver", "-password")
@@ -23,7 +25,7 @@ const getOrders = async (req, res) => {
 // @access  Private
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findOne({ _id: req.params.id, company: req.user.company })
       .populate("truck")
       .populate("driver", "-password")
       .populate("stops");
@@ -41,7 +43,28 @@ const getOrderById = async (req, res) => {
 // @access  Private (admin/dashboard)
 const createOrder = async (req, res) => {
   try {
-    const newOrder = await Order.create(req.body);
+    const { truck, driver, ...rest } = req.body || {};
+
+    if (truck) {
+      const truckDoc = await Truck.findOne({ _id: truck, company: req.user.company });
+      if (!truckDoc) {
+        return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
+    if (driver) {
+      const driverDoc = await User.findOne({ _id: driver, company: req.user.company });
+      if (!driverDoc) {
+        return res.status(400).json({ message: "Invalid driver for company" });
+      }
+    }
+
+    const newOrder = await Order.create({
+      ...rest,
+      truck: truck || null,
+      driver: driver || null,
+      company: req.user.company,
+    });
     res.status(201).json(newOrder);
   } catch (error) {
     console.log("Create order error:", error.message);
@@ -56,8 +79,22 @@ const createOrder = async (req, res) => {
 // @access  Private (admin/dashboard)
 const updateOrder = async (req, res) => {
   try {
-    const updatedOrder = await Order.findByIdAndUpdate(
-      req.params.id,
+    if (req.body?.truck) {
+      const truckDoc = await Truck.findOne({ _id: req.body.truck, company: req.user.company });
+      if (!truckDoc) {
+        return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
+    if (req.body?.driver) {
+      const driverDoc = await User.findOne({ _id: req.body.driver, company: req.user.company });
+      if (!driverDoc) {
+        return res.status(400).json({ message: "Invalid driver for company" });
+      }
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: req.params.id, company: req.user.company },
       req.body,
       { new: true }
     );
@@ -76,7 +113,7 @@ const updateOrder = async (req, res) => {
 // @access  Private
 const updateOrderExtraInfo = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findOne({ _id: req.params.id, company: req.user.company });
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -139,12 +176,12 @@ const updateOrderExtraInfo = async (req, res) => {
 // @access  Private (admin/dashboard)
 const deleteOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findOne({ _id: req.params.id, company: req.user.company });
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     // Delete all stops linked to this order
-    await Stop.deleteMany({ order: order._id });
+    await Stop.deleteMany({ order: order._id, company: req.user.company });
 
     await order.deleteOne();
 

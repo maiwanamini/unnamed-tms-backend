@@ -12,7 +12,12 @@ const getStops = async (req, res) => {
       return res.status(400).json({ message: "Order ID is required" });
     }
 
-    const stops = await Stop.find({ order }).sort({ orderIndex: 1 });
+    const orderDoc = await Order.findOne({ _id: order, company: req.user.company });
+    if (!orderDoc) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const stops = await Stop.find({ order, company: req.user.company }).sort({ orderIndex: 1 });
     res.status(200).json(stops);
   } catch (error) {
     res
@@ -26,7 +31,7 @@ const getStops = async (req, res) => {
 // @access  Private
 const getStopById = async (req, res) => {
   try {
-    const stop = await Stop.findById(req.params.id);
+    const stop = await Stop.findOne({ _id: req.params.id, company: req.user.company });
     if (!stop) return res.status(404).json({ message: "Stop not found" });
 
     res.status(200).json(stop);
@@ -52,6 +57,8 @@ const createStop = async (req, res) => {
       city,
       postalCode,
       plannedTime,
+      note,
+      reference,
     } = req.body;
 
     const orderRef = orderId || order;
@@ -62,7 +69,13 @@ const createStop = async (req, res) => {
       return res.status(400).json({ message: "orderIndex is required" });
     }
 
+    const orderDoc = await Order.findOne({ _id: orderRef, company: req.user.company });
+    if (!orderDoc) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
     const stop = await Stop.create({
+      company: req.user.company,
       order: orderRef,
       orderIndex,
       type,
@@ -71,6 +84,8 @@ const createStop = async (req, res) => {
       city,
       postalCode,
       plannedTime,
+      note,
+      reference,
     });
 
     // 2. Push stop ID into order.stops
@@ -89,9 +104,11 @@ const createStop = async (req, res) => {
 // @access  Private
 const updateStop = async (req, res) => {
   try {
-    const stop = await Stop.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const stop = await Stop.findOneAndUpdate(
+      { _id: req.params.id, company: req.user.company },
+      req.body,
+      { new: true }
+    );
 
     if (!stop) return res.status(404).json({ message: "Stop not found" });
 
@@ -108,7 +125,7 @@ const updateStop = async (req, res) => {
 // @access  Private
 const deleteStop = async (req, res) => {
   try {
-    const stop = await Stop.findByIdAndDelete(req.params.id);
+    const stop = await Stop.findOneAndDelete({ _id: req.params.id, company: req.user.company });
 
     if (!stop) return res.status(404).json({ message: "Stop not found" });
 

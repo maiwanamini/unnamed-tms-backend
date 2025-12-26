@@ -2,6 +2,7 @@ import express from "express";
 import {
   getCurrentUser,
   getAllUsers,
+  createUser,
   getUserById,
   updateUser,
   deleteUser,
@@ -15,6 +16,9 @@ router.get("/me", protect, getCurrentUser);
 
 // GET all users (protected)
 router.get("/", protect, getAllUsers);
+
+// CREATE user (protected)
+router.post("/", protect, createUser);
 
 // GET single user (protected)
 router.get("/:id", protect, getUserById);
