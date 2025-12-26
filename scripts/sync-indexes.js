@@ -6,7 +6,6 @@ import Truck from "../src/models/Truck.js";
 import Trailer from "../src/models/Trailer.js";
 import Stop from "../src/models/Stop.js";
 import Client from "../src/models/Client.js";
-import Partner from "../src/models/Partner.js";
 
 dotenv.config();
 
@@ -22,7 +21,7 @@ async function main() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log("MongoDB Connected");
 
-  const models = [Order, Truck, Trailer, Stop, Client, Partner];
+  const models = [Order, Truck, Trailer, Stop, Client];
 
   for (const model of models) {
     const name = model.modelName;
