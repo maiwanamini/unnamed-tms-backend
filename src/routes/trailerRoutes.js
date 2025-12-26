@@ -6,23 +6,23 @@ import {
   updateTrailer,
   deleteTrailer,
 } from "../controllers/trailerController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, requireCompany } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET all trailers
-router.get("/", protect, getTrailers);
+router.get("/", protect, requireCompany, getTrailers);
 
 // GET single trailer
-router.get("/:id", protect, getTrailerById);
+router.get("/:id", protect, requireCompany, getTrailerById);
 
 // CREATE trailer
-router.post("/", protect, createTrailer);
+router.post("/", protect, requireCompany, createTrailer);
 
 // UPDATE trailer
-router.put("/:id", protect, updateTrailer);
+router.put("/:id", protect, requireCompany, updateTrailer);
 
 // DELETE trailer
-router.delete("/:id", protect, deleteTrailer);
+router.delete("/:id", protect, requireCompany, deleteTrailer);
 
 export default router;

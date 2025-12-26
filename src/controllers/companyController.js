@@ -1,4 +1,5 @@
 import Company from "../models/Company.js";
+import User from "../models/User.js";
 
 // @desc    Get all companies
 // @route   GET /api/companies
@@ -42,6 +43,19 @@ const createCompany = async (req, res) => {
   try {
     const { name, companyId, email, phone, address, recipients } = req.body;
 
+    if (!req.user?._id) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const owner = await User.findById(req.user._id);
+    if (!owner) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    if (owner.company) {
+      return res.status(400).json({ message: "User already belongs to a company" });
+    }
+
     if (!name || !companyId || !email || !phone) {
       return res.status(400).json({
         message: "name, companyId, email, and phone are required",
@@ -51,6 +65,7 @@ const createCompany = async (req, res) => {
     const recipientsList = Array.isArray(recipients) ? recipients : [];
 
     const company = await Company.create({
+      owner: owner._id,
       name,
       companyId,
       email,
@@ -59,7 +74,11 @@ const createCompany = async (req, res) => {
       recipients: recipientsList,
     });
 
-    res.status(201).json(company);
+    owner.company = company._id;
+    await owner.save();
+
+    const safeOwner = await User.findById(owner._id).select("-password");
+    res.status(201).json({ company, user: safeOwner });
   } catch (error) {
     res
       .status(500)

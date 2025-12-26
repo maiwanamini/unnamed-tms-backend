@@ -2,10 +2,16 @@ import mongoose from "mongoose";
 
 const trailerSchema = new mongoose.Schema(
   {
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+      index: true,
+    },
     licensePlate: {
       type: String,
       required: true,
-      unique: true,
+      // unique handled per-company via indexes
     },
     brand: {
       type: String,
@@ -42,6 +48,8 @@ const trailerSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+trailerSchema.index({ company: 1, licensePlate: 1 }, { unique: true, sparse: true });
 
 const Trailer = mongoose.model("Trailer", trailerSchema);
 

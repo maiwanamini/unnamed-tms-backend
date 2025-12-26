@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, requireCompany } from "../middleware/authMiddleware.js";
 import {
   getClients,
   getClientById,
@@ -11,18 +11,18 @@ import {
 const router = express.Router();
 
 // GET all clients
-router.get("/", protect, getClients);
+router.get("/", protect, requireCompany, getClients);
 
 // GET single client
-router.get("/:id", protect, getClientById);
+router.get("/:id", protect, requireCompany, getClientById);
 
 // CREATE client
-router.post("/", protect, createClient);
+router.post("/", protect, requireCompany, createClient);
 
 // UPDATE client
-router.put("/:id", protect, updateClient);
+router.put("/:id", protect, requireCompany, updateClient);
 
 // DELETE client
-router.delete("/:id", protect, deleteClient);
+router.delete("/:id", protect, requireCompany, deleteClient);
 
 export default router;

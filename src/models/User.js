@@ -3,6 +3,16 @@ import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
   {
+    role: {
+      type: String,
+      enum: ["admin", "driver"],
+      default: "admin",
+    },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+    },
     firstName: {
       type: String,
       required: true,

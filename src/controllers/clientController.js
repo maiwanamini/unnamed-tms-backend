@@ -5,7 +5,7 @@ import Client from "../models/Client.js";
 // @access  Private
 const getClients = async (req, res) => {
   try {
-    const clients = await Client.find().sort({ createdAt: -1 });
+    const clients = await Client.find({ company: req.user.company }).sort({ createdAt: -1 });
     res.status(200).json(clients);
   } catch (error) {
     res
@@ -19,7 +19,7 @@ const getClients = async (req, res) => {
 // @access  Private
 const getClientById = async (req, res) => {
   try {
-    const client = await Client.findById(req.params.id);
+    const client = await Client.findOne({ _id: req.params.id, company: req.user.company });
     if (!client) return res.status(404).json({ message: "Client not found" });
 
     res.status(200).json(client);
@@ -57,6 +57,7 @@ const createClient = async (req, res) => {
     }
 
     const client = await Client.create({
+      company: req.user.company,
       clientName,
       clientAddress,
       contactName,
@@ -77,10 +78,14 @@ const createClient = async (req, res) => {
 // @access  Private
 const updateClient = async (req, res) => {
   try {
-    const client = await Client.findByIdAndUpdate(req.params.id, req.body, {
+    const client = await Client.findOneAndUpdate(
+      { _id: req.params.id, company: req.user.company },
+      req.body,
+      {
       new: true,
       runValidators: true,
-    });
+      }
+    );
 
     if (!client) return res.status(404).json({ message: "Client not found" });
 
@@ -97,7 +102,7 @@ const updateClient = async (req, res) => {
 // @access  Private
 const deleteClient = async (req, res) => {
   try {
-    const client = await Client.findByIdAndDelete(req.params.id);
+    const client = await Client.findOneAndDelete({ _id: req.params.id, company: req.user.company });
 
     if (!client) return res.status(404).json({ message: "Client not found" });
 
