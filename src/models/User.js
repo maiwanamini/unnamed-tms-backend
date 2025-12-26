@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    avatarUrl: {
+      type: String,
+      default: "",
+    },
+    avatarPublicId: {
+      type: String,
+      default: "",
+    },
     phone: {
       type: String,
     },

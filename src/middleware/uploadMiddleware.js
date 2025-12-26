@@ -12,8 +12,15 @@ const fileFilter = (req, file, cb) => {
 
 const uploadProofImage = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter,
 }).single("proofImage");
 
 export default uploadProofImage;
+
+export const uploadSingleImage = (fieldName) =>
+  multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter,
+  }).single(fieldName);

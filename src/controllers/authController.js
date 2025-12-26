@@ -1,14 +1,56 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
+import { uploadImageBuffer } from "../utils/cloudinary.js";
+
+const safeTrim = (v) => String(v || "").trim();
 export const registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const firstName = safeTrim(req.body?.firstName);
+    const lastName = safeTrim(req.body?.lastName);
+    const email = safeTrim(req.body?.email);
+    const password = String(req.body?.password || "");
+
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        message: "firstName, lastName, email, and password are required",
+      });
+    }
 
     // check if user already exists
     const exists = await User.findOne({ email });
     if (exists) {
-      return res.status(400).json({ message: "Email already in use." });
+      return res.status(400).json({
+        message: "Email already in use.",
+        field: "email",
+        code: "EMAIL_IN_USE",
+      });
+    }
+
+    let avatarUrl = "";
+    let avatarPublicId = "";
+    if (req.file?.buffer) {
+      try {
+        const uploaded = await uploadImageBuffer(req.file.buffer, "avatars");
+        avatarUrl = uploaded?.url || "";
+        avatarPublicId = uploaded?.publicId || "";
+      } catch (uploadErr) {
+        console.error("Avatar upload failed", uploadErr?.message || uploadErr);
+
+        if (uploadErr?.code === "CLOUDINARY_NOT_CONFIGURED") {
+          return res.status(503).json({
+            message:
+              "Avatar uploads are not configured on the server. Please register without a profile picture for now.",
+            field: "avatar",
+            code: "AVATAR_UPLOAD_NOT_CONFIGURED",
+          });
+        }
+        return res.status(400).json({
+          message: "Avatar upload failed. Please try again, or register without a profile picture.",
+          field: "avatar",
+          code: "AVATAR_UPLOAD_FAILED",
+        });
+      }
     }
 
     // create user (password will be hashed by the User model pre-save hook)
@@ -18,6 +60,8 @@ export const registerUser = async (req, res) => {
       email,
       password,
       role: "admin",
+      avatarUrl,
+      avatarPublicId,
     });
 
     // generate token
@@ -32,6 +76,7 @@ export const registerUser = async (req, res) => {
         lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
+        avatarUrl: user.avatarUrl,
         role: user.role,
         company: user.company,
       },
@@ -69,6 +114,7 @@ export const loginUser = async (req, res) => {
         lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
+        avatarUrl: user.avatarUrl,
         role: user.role,
         company: user.company,
       },

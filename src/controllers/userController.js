@@ -66,7 +66,22 @@ export const createUser = async (req, res) => {
 
     const exists = await User.findOne({ email });
     if (exists) {
-      return res.status(400).json({ message: "Email already in use." });
+      return res.status(400).json({
+        message: "Email already in use.",
+        field: "email",
+        code: "EMAIL_IN_USE",
+      });
+    }
+
+    if (phone) {
+      const phoneExists = await User.findOne({ company: req.user.company, phone });
+      if (phoneExists) {
+        return res.status(400).json({
+          message: "Phone already in use.",
+          field: "phone",
+          code: "PHONE_IN_USE",
+        });
+      }
     }
 
     const user = await User.create({
@@ -111,11 +126,11 @@ export const getUserById = async (req, res) => {
 // @access Private
 export const updateUser = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, phone } = req.body;
 
     const updated = await User.findByIdAndUpdate(
       req.params.id,
-      { firstName, lastName, email },
+      { firstName, lastName, email, phone},
       { new: true }
     ).select("-password");
 

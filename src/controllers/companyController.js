@@ -41,7 +41,7 @@ const getCompanyById = async (req, res) => {
 // @access  Private
 const createCompany = async (req, res) => {
   try {
-    const { name, companyId, email, phone, address, recipients } = req.body;
+    const { name, email, phone, address, recipients } = req.body;
 
     if (!req.user?._id) {
       return res.status(401).json({ message: "Not authorized" });
@@ -56,10 +56,24 @@ const createCompany = async (req, res) => {
       return res.status(400).json({ message: "User already belongs to a company" });
     }
 
-    if (!name || !companyId || !email || !phone) {
+    if (!name || !email || !phone) {
       return res.status(400).json({
-        message: "name, companyId, email, and phone are required",
+        message: "name, email, and phone are required",
       });
+    }
+
+    const generateCompanyId = () => String(Math.floor(10000 + Math.random() * 90000));
+    let generatedCompanyId = generateCompanyId();
+    for (let i = 0; i < 10; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const exists = await Company.exists({ companyId: generatedCompanyId });
+      if (!exists) break;
+      generatedCompanyId = generateCompanyId();
+    }
+
+    const stillExists = await Company.exists({ companyId: generatedCompanyId });
+    if (stillExists) {
+      return res.status(500).json({ message: "Could not generate unique companyId" });
     }
 
     const recipientsList = Array.isArray(recipients) ? recipients : [];
@@ -67,7 +81,7 @@ const createCompany = async (req, res) => {
     const company = await Company.create({
       owner: owner._id,
       name,
-      companyId,
+      companyId: generatedCompanyId,
       email,
       phone,
       address,
@@ -80,6 +94,17 @@ const createCompany = async (req, res) => {
     const safeOwner = await User.findById(owner._id).select("-password");
     res.status(201).json({ company, user: safeOwner });
   } catch (error) {
+    if (error?.code === 11000) {
+      if (error?.keyPattern?.companyId) {
+        return res.status(409).json({ message: "Company ID already exists" });
+      }
+      if (error?.keyPattern?.email) {
+        return res.status(409).json({ message: "Company email already exists" });
+      }
+      if (error?.keyPattern?.owner) {
+        return res.status(409).json({ message: "Owner already has a company" });
+      }
+    }
     res
       .status(500)
       .json({ message: "Failed to create company", error: error.message });
