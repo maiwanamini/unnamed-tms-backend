@@ -56,6 +56,24 @@ const createClient = async (req, res) => {
       });
     }
 
+    const emailExists = await Client.findOne({ company: req.user.company, contactEmail });
+    if (emailExists) {
+      return res.status(400).json({
+        message: "Contact email already in use.",
+        field: "contactEmail",
+        code: "EMAIL_IN_USE",
+      });
+    }
+
+    const phoneExists = await Client.findOne({ company: req.user.company, contactPhone });
+    if (phoneExists) {
+      return res.status(400).json({
+        message: "Contact phone already in use.",
+        field: "contactPhone",
+        code: "PHONE_IN_USE",
+      });
+    }
+
     const client = await Client.create({
       company: req.user.company,
       clientName,
