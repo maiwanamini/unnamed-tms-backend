@@ -12,7 +12,6 @@ import truckRoutes from "./routes/truckRoutes.js";
 import trailerRoutes from "./routes/trailerRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
-import partnerRoutes from "./routes/partnerRoutes.js";
 
 dotenv.config();
 
@@ -37,7 +36,6 @@ app.use("/api/trucks", truckRoutes);
 app.use("/api/trailers", trailerRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/clients", clientRoutes);
-app.use("/api/partners", partnerRoutes);
 
 // Connect to MongoDB
 mongoose
