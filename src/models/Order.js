@@ -24,10 +24,6 @@ const orderSchema = new mongoose.Schema(
     customerPhone: {
       type: String,
     },
-    date: {
-      type: Date,
-      required: true,
-    },
     truck: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Truck",

@@ -32,6 +32,7 @@ const stopSchema = new mongoose.Schema(
     },
     plannedTime: {
       type: Date,
+      required: true,
     },
     completed: {
       type: Boolean,
