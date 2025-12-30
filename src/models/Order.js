@@ -43,6 +43,11 @@ const orderSchema = new mongoose.Schema(
       ref: "Truck",
       default: null,
     },
+    trailer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trailer",
+      default: null,
+    },
     driver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "driver"],
       default: "admin",
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -36,6 +41,10 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
+    },
+    language: {
+      type: String,
+      default: "en",
     },
     password: {
       type: String,

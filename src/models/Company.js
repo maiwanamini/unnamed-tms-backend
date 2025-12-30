@@ -27,6 +27,14 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    logoUrl: {
+      type: String,
+      default: "",
+    },
+    logoPublicId: {
+      type: String,
+      default: "",
+    },
     address: {
       type: String,
     },

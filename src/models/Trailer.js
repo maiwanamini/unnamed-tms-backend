@@ -19,6 +19,9 @@ const trailerSchema = new mongoose.Schema(
     model: {
       type: String,
     },
+    trailerNumber: {
+      type: String,
+    },
     year: {
       type: Number,
     },
@@ -37,8 +40,8 @@ const trailerSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["available", "in-use", "maintenance"],
-      default: "available",
+      enum: ["available", "in-use", "maintenance", "active", "inactive"],
+      default: "active",
     },
     truck: {
       type: mongoose.Schema.Types.ObjectId,

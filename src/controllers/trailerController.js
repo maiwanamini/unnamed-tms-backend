@@ -1,6 +1,12 @@
 import Trailer from "../models/Trailer.js";
 import Truck from "../models/Truck.js";
 
+function normalizePlate(v) {
+  return String(v || "")
+    .trim()
+    .toUpperCase();
+}
+
 // @desc    Get all trailers
 // @route   GET /api/trailers
 // @access  Private
@@ -45,6 +51,10 @@ export const createTrailer = async (req, res) => {
   try {
     const { truck, ...rest } = req.body || {};
 
+    if (rest?.licensePlate != null) {
+      rest.licensePlate = normalizePlate(rest.licensePlate);
+    }
+
     if (truck) {
       const truckDoc = await Truck.findOne({ _id: truck, company: req.user.company });
       if (!truckDoc) {
@@ -55,9 +65,14 @@ export const createTrailer = async (req, res) => {
     const trailer = await Trailer.create({ ...rest, truck: truck || null, company: req.user.company });
     res.status(201).json(trailer);
   } catch (error) {
-    res
-      .status(400)
-      .json({ message: "Failed to create trailer", error: error.message });
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        message: "License plate is already in use",
+        field: "licensePlate",
+        code: "LICENSE_PLATE_IN_USE",
+      });
+    }
+    res.status(400).json({ message: "Failed to create trailer", error: error.message });
   }
 };
 
@@ -67,6 +82,9 @@ export const createTrailer = async (req, res) => {
 export const updateTrailer = async (req, res) => {
   try {
     const trailer = await Trailer.findOne({ _id: req.params.id, company: req.user.company });
+    if (req.body?.licensePlate != null) {
+      req.body.licensePlate = normalizePlate(req.body.licensePlate);
+    }
 
     if (!trailer) {
       return res.status(404).json({ message: "Trailer not found" });
@@ -105,9 +123,14 @@ export const updateTrailer = async (req, res) => {
 
     res.status(200).json(populated);
   } catch (error) {
-    res
-      .status(400)
-      .json({ message: "Failed to update trailer", error: error.message });
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        message: "License plate is already in use",
+        field: "licensePlate",
+        code: "LICENSE_PLATE_IN_USE",
+      });
+    }
+    res.status(400).json({ message: "Failed to update trailer", error: error.message });
   }
 };
 

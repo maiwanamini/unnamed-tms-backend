@@ -1,5 +1,6 @@
 import Order from "../models/Order.js";
 import Stop from "../models/Stop.js";
+import Trailer from "../models/Trailer.js";
 import Truck from "../models/Truck.js";
 import User from "../models/User.js";
 import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
@@ -12,6 +13,7 @@ const getOrders = async (req, res) => {
     const orders = await Order.find({ company: req.user.company })
       .sort({ orderNumber: 1 })
       .populate("truck")
+      .populate("trailer")
       .populate("driver", "-password")
       .populate("stops");
     res.status(200).json(orders);
@@ -27,6 +29,7 @@ const getOrderById = async (req, res) => {
   try {
     const order = await Order.findOne({ _id: req.params.id, company: req.user.company })
       .populate("truck")
+      .populate("trailer")
       .populate("driver", "-password")
       .populate("stops");
 
@@ -43,12 +46,19 @@ const getOrderById = async (req, res) => {
 // @access  Private (admin/dashboard)
 const createOrder = async (req, res) => {
   try {
-    const { truck, driver, ...rest } = req.body || {};
+    const { truck, trailer, driver, ...rest } = req.body || {};
 
     if (truck) {
       const truckDoc = await Truck.findOne({ _id: truck, company: req.user.company });
       if (!truckDoc) {
         return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
+    if (trailer) {
+      const trailerDoc = await Trailer.findOne({ _id: trailer, company: req.user.company });
+      if (!trailerDoc) {
+        return res.status(400).json({ message: "Invalid trailer for company" });
       }
     }
 
@@ -62,6 +72,7 @@ const createOrder = async (req, res) => {
     const newOrder = await Order.create({
       ...rest,
       truck: truck || null,
+      trailer: trailer || null,
       driver: driver || null,
       company: req.user.company,
     });
@@ -83,6 +94,13 @@ const updateOrder = async (req, res) => {
       const truckDoc = await Truck.findOne({ _id: req.body.truck, company: req.user.company });
       if (!truckDoc) {
         return res.status(400).json({ message: "Invalid truck for company" });
+      }
+    }
+
+    if (req.body?.trailer) {
+      const trailerDoc = await Trailer.findOne({ _id: req.body.trailer, company: req.user.company });
+      if (!trailerDoc) {
+        return res.status(400).json({ message: "Invalid trailer for company" });
       }
     }
 
