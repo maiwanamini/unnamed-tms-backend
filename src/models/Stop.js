@@ -33,8 +33,16 @@ const stopSchema = new mongoose.Schema(
     city: {
       type: String,
     },
+    region: {
+      type: String,
+    },
     postalCode: {
       type: String,
+    },
+    geo: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      mapboxId: { type: String, default: null },
     },
     plannedTime: {
       type: Date,

@@ -44,6 +44,14 @@ export const createTruck = async (req, res) => {
   try {
     const { driver, trailer, ...rest } = req.body || {};
 
+    // Normalize common fields.
+    if (typeof rest.licensePlate === "string") rest.licensePlate = rest.licensePlate.trim();
+    if (typeof rest.vin === "string") {
+      rest.vin = rest.vin.trim().toUpperCase();
+      // Treat empty VIN as not provided (avoids unique conflicts on "").
+      if (!rest.vin) delete rest.vin;
+    }
+
     if (driver) {
       const driverDoc = await User.findOne({ _id: driver, company: req.user.company });
       if (!driverDoc) {
@@ -61,6 +69,23 @@ export const createTruck = async (req, res) => {
     const truck = await Truck.create({ ...rest, driver: driver || null, trailer: trailer || null, company: req.user.company });
     res.status(201).json(truck);
   } catch (error) {
+    if (error?.code === 11000) {
+      const keys = error?.keyPattern || error?.keyValue || {};
+      if (keys?.licensePlate) {
+        return res.status(400).json({
+          message: "License plate already in use.",
+          field: "licensePlate",
+          code: "LICENSE_PLATE_IN_USE",
+        });
+      }
+      if (keys?.vin) {
+        return res.status(400).json({
+          message: "VIN already in use.",
+          field: "vin",
+          code: "VIN_IN_USE",
+        });
+      }
+    }
     res
       .status(400)
       .json({ message: "Failed to create truck", error: error.message });
@@ -72,6 +97,14 @@ export const createTruck = async (req, res) => {
 // @access  Private
 export const updateTruck = async (req, res) => {
   try {
+    // Normalize common fields.
+    if (typeof req.body?.licensePlate === "string") req.body.licensePlate = req.body.licensePlate.trim();
+    if (typeof req.body?.vin === "string") {
+      req.body.vin = req.body.vin.trim().toUpperCase();
+      // Treat empty VIN as unset.
+      if (!req.body.vin) req.body.vin = undefined;
+    }
+
     const truck = await Truck.findOne({ _id: req.params.id, company: req.user.company });
 
     if (!truck) {
@@ -136,12 +169,28 @@ export const updateTruck = async (req, res) => {
     // Update truck
     Object.assign(truck, req.body);
     const updatedTruck = await truck.save();
-    const populatedTruck = await updatedTruck
-      .populate("driver", "-password")
-      .populate("trailer");
+    await updatedTruck.populate("driver", "-password");
+    await updatedTruck.populate("trailer");
 
-    res.status(200).json(populatedTruck);
+    res.status(200).json(updatedTruck);
   } catch (error) {
+    if (error?.code === 11000) {
+      const keys = error?.keyPattern || error?.keyValue || {};
+      if (keys?.licensePlate) {
+        return res.status(400).json({
+          message: "License plate already in use.",
+          field: "licensePlate",
+          code: "LICENSE_PLATE_IN_USE",
+        });
+      }
+      if (keys?.vin) {
+        return res.status(400).json({
+          message: "VIN already in use.",
+          field: "vin",
+          code: "VIN_IN_USE",
+        });
+      }
+    }
     res
       .status(400)
       .json({ message: "Failed to update truck", error: error.message });

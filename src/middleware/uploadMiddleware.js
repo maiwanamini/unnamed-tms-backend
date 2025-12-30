@@ -24,3 +24,12 @@ export const uploadSingleImage = (fieldName) =>
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter,
   }).single(fieldName);
+
+export const maybeUploadSingleImage = (fieldName) => {
+  const upload = uploadSingleImage(fieldName);
+  return (req, res, next) => {
+    const ct = String(req.headers["content-type"] || "");
+    if (!ct.toLowerCase().startsWith("multipart/form-data")) return next();
+    return upload(req, res, next);
+  };
+};

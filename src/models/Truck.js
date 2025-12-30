@@ -13,6 +13,11 @@ const truckSchema = new mongoose.Schema(
       required: true,
       // unique handled per-company via indexes
     },
+    vin: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
     brand: {
       type: String,
     },
@@ -37,7 +42,7 @@ const truckSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["active", "inactive"],
-      default: "inactive",
+      default: "active",
     },
     driver: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,6 +59,7 @@ const truckSchema = new mongoose.Schema(
 );
 
 truckSchema.index({ company: 1, licensePlate: 1 }, { unique: true, sparse: true });
+truckSchema.index({ company: 1, vin: 1 }, { unique: true, sparse: true });
 
 const Truck = mongoose.model("Truck", truckSchema);
 
