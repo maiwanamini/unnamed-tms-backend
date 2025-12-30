@@ -1,5 +1,25 @@
 import Company from "../models/Company.js";
 import User from "../models/User.js";
+import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
+
+const safeTrim = (v) => String(v || "").trim();
+
+const parseRecipientsField = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return [];
+    try {
+      const parsed = JSON.parse(s);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      // Accept a single id string as a shorthand.
+      return [s];
+    }
+  }
+  return [];
+};
 
 // @desc    Get all companies
 // @route   GET /api/companies
@@ -41,7 +61,11 @@ const getCompanyById = async (req, res) => {
 // @access  Private
 const createCompany = async (req, res) => {
   try {
-    const { name, email, phone, address, recipients } = req.body;
+    const name = safeTrim(req.body?.name);
+    const email = safeTrim(req.body?.email);
+    const phone = safeTrim(req.body?.phone);
+    const address = safeTrim(req.body?.address);
+    const recipients = parseRecipientsField(req.body?.recipients);
 
     if (!req.user?._id) {
       return res.status(401).json({ message: "Not authorized" });
@@ -62,6 +86,35 @@ const createCompany = async (req, res) => {
       });
     }
 
+    let logoUrl = "";
+    let logoPublicId = "";
+
+    if (req.file?.buffer) {
+      try {
+        const uploaded = await uploadImageBuffer(req.file.buffer, "company-logos");
+        logoUrl = uploaded?.url || "";
+        logoPublicId = uploaded?.publicId || "";
+      } catch (uploadErr) {
+        console.error("Company logo upload failed", uploadErr?.message || uploadErr);
+
+        if (uploadErr?.code === "CLOUDINARY_NOT_CONFIGURED") {
+          return res.status(503).json({
+            message:
+              "Company logo uploads are not configured on the server. Please create the company without a logo for now.",
+            field: "logo",
+            code: "COMPANY_LOGO_UPLOAD_NOT_CONFIGURED",
+          });
+        }
+
+        return res.status(400).json({
+          message:
+            "Company logo upload failed. Please try again, or create the company without a logo.",
+          field: "logo",
+          code: "COMPANY_LOGO_UPLOAD_FAILED",
+        });
+      }
+    }
+
     const generateCompanyId = () => String(Math.floor(10000 + Math.random() * 90000));
     let generatedCompanyId = generateCompanyId();
     for (let i = 0; i < 10; i += 1) {
@@ -76,16 +129,16 @@ const createCompany = async (req, res) => {
       return res.status(500).json({ message: "Could not generate unique companyId" });
     }
 
-    const recipientsList = Array.isArray(recipients) ? recipients : [];
-
     const company = await Company.create({
       owner: owner._id,
       name,
       companyId: generatedCompanyId,
       email,
       phone,
-      address,
-      recipients: recipientsList,
+      address: address || undefined,
+      recipients,
+      logoUrl,
+      logoPublicId,
     });
 
     owner.company = company._id;
@@ -116,14 +169,74 @@ const createCompany = async (req, res) => {
 // @access  Private
 const updateCompany = async (req, res) => {
   try {
-    const company = await Company.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate("recipients", "firstName lastName email phone");
+    if (!req.user?._id) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    if (String(req.user?.role || "") !== "admin") {
+      return res.status(403).json({ message: "Only admins can update company details" });
+    }
+
+    if (!req.user?.company) {
+      return res.status(400).json({ message: "User must belong to a company" });
+    }
+
+    if (String(req.params.id) !== String(req.user.company)) {
+      return res.status(403).json({ message: "Not allowed to update this company" });
+    }
+
+    const company = await Company.findById(req.params.id);
 
     if (!company) return res.status(404).json({ message: "Company not found" });
 
-    res.status(200).json(company);
+    const updates = {};
+    if (req.body?.name !== undefined) updates.name = safeTrim(req.body.name);
+    if (req.body?.email !== undefined) updates.email = safeTrim(req.body.email);
+    if (req.body?.phone !== undefined) updates.phone = safeTrim(req.body.phone);
+    if (req.body?.address !== undefined) updates.address = safeTrim(req.body.address);
+    if (req.body?.recipients !== undefined) updates.recipients = parseRecipientsField(req.body.recipients);
+
+    if (req.file?.buffer) {
+      try {
+        if (company.logoPublicId) {
+          await deleteImage(company.logoPublicId);
+        }
+
+        const uploaded = await uploadImageBuffer(req.file.buffer, "company-logos");
+        updates.logoUrl = uploaded?.url || "";
+        updates.logoPublicId = uploaded?.publicId || "";
+      } catch (uploadErr) {
+        console.error("Company logo upload failed", uploadErr?.message || uploadErr);
+
+        if (uploadErr?.code === "CLOUDINARY_NOT_CONFIGURED") {
+          return res.status(503).json({
+            message:
+              "Company logo uploads are not configured on the server. Please update the company without a logo for now.",
+            field: "logo",
+            code: "COMPANY_LOGO_UPLOAD_NOT_CONFIGURED",
+          });
+        }
+
+        return res.status(400).json({
+          message: "Company logo upload failed. Please try again.",
+          field: "logo",
+          code: "COMPANY_LOGO_UPLOAD_FAILED",
+        });
+      }
+    }
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value !== undefined) company[key] = value;
+    });
+
+    await company.save();
+
+    const populated = await Company.findById(company._id).populate(
+      "recipients",
+      "firstName lastName email phone"
+    );
+
+    res.status(200).json(populated);
   } catch (error) {
     res
       .status(500)

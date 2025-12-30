@@ -9,6 +9,7 @@ import {
   removeRecipient,
 } from "../controllers/companyController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { uploadSingleImage } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -19,10 +20,10 @@ router.get("/", protect, getCompanies);
 router.get("/:id", protect, getCompanyById);
 
 // CREATE company
-router.post("/", protect, createCompany);
+router.post("/", protect, uploadSingleImage("logo"), createCompany);
 
 // UPDATE company
-router.put("/:id", protect, updateCompany);
+router.put("/:id", protect, uploadSingleImage("logo"), updateCompany);
 
 // DELETE company
 router.delete("/:id", protect, deleteCompany);

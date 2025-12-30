@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 
+function normalizeOrderStatus(value) {
+  const v = String(value || "").trim().toLowerCase();
+  if (!v) return value;
+  if (v === "cancelled") return "canceled";
+  return v;
+}
+
 const orderSchema = new mongoose.Schema(
   {
     company: {
@@ -43,15 +50,19 @@ const orderSchema = new mongoose.Schema(
       ref: "Truck",
       default: null,
     },
+    trailer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trailer",
+      default: null,
+    },
     driver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null, 
-      required: true,
     },
     status: {
       type: String,
-      enum: ["pending", "assigned", "in-progress", "completed", "cancelled"],
+      enum: ["pending", "assigned", "in-progress", "completed", "canceled"],
       default: "pending",
     },
     stops: [{ type: mongoose.Schema.Types.ObjectId, ref: "Stop" }],
@@ -70,6 +81,12 @@ const orderSchema = new mongoose.Schema(
 
 orderSchema.index({ company: 1, orderNumber: 1 }, { unique: true, sparse: true });
 orderSchema.index({ company: 1, orderIndex: 1 }, { unique: true, sparse: true });
+
+orderSchema.pre("validate", function () {
+  if (this.status) {
+    this.status = normalizeOrderStatus(this.status);
+  }
+});
 
 // ------------------------------------------
 // AUTO‑GENERATE ORDER NUMBER (O-01, O-02,...)
