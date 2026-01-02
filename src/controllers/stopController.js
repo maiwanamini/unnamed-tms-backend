@@ -1,6 +1,19 @@
 import Stop from "../models/Stop.js";
 import Order from "../models/Order.js";
 
+function resolveLocationName({ locationName, address, city, region } = {}) {
+  const explicit = String(locationName || "").trim();
+  if (explicit) return explicit;
+
+  const addr = String(address || "").trim();
+  if (addr) return addr;
+
+  const parts = [String(city || "").trim(), String(region || "").trim()].filter(Boolean);
+  if (parts.length) return parts.join(", ");
+
+  return "Location";
+}
+
 // @desc    Get all stops for a specific order
 // @route   GET /api/stops?order=:orderId or GET /api/orders/:orderId/stops
 // @access  Private
@@ -76,12 +89,14 @@ const createStop = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    const resolvedLocationName = resolveLocationName({ locationName, address, city, region });
+
     const stop = await Stop.create({
       company: req.user.company,
       order: orderRef,
       orderIndex,
       type,
-      locationName,
+      locationName: resolvedLocationName,
       address,
       city,
       region,
@@ -108,6 +123,18 @@ const createStop = async (req, res) => {
 // @access  Private
 const updateStop = async (req, res) => {
   try {
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "locationName")) {
+      const v = String(req.body.locationName || "").trim();
+      if (!v) {
+        req.body.locationName = resolveLocationName({
+          locationName: req.body.locationName,
+          address: req.body.address,
+          city: req.body.city,
+          region: req.body.region,
+        });
+      }
+    }
+
     const stop = await Stop.findOneAndUpdate(
       { _id: req.params.id, company: req.user.company },
       req.body,

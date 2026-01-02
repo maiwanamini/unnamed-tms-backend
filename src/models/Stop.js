@@ -24,7 +24,7 @@ const stopSchema = new mongoose.Schema(
     },
     locationName: {
       type: String,
-      required: true,
+      required: false,
     },
     address: {
       type: String,

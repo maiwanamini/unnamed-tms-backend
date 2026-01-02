@@ -5,6 +5,14 @@ import Truck from "../models/Truck.js";
 import User from "../models/User.js";
 import { deleteImage, uploadImageBuffer } from "../utils/cloudinary.js";
 
+function normalizeOrderStatus(status) {
+  const v = String(status || "").trim().toLowerCase();
+  if (!v) return status;
+  if (v === "cancelled") return "canceled";
+  if (v === "canceled") return "canceled";
+  return v;
+}
+
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private
@@ -47,6 +55,7 @@ const getOrderById = async (req, res) => {
 const createOrder = async (req, res) => {
   try {
     const { truck, trailer, driver, ...rest } = req.body || {};
+    if (rest.status) rest.status = normalizeOrderStatus(rest.status);
 
     if (truck) {
       const truckDoc = await Truck.findOne({ _id: truck, company: req.user.company });
@@ -90,6 +99,10 @@ const createOrder = async (req, res) => {
 // @access  Private (admin/dashboard)
 const updateOrder = async (req, res) => {
   try {
+    if (req.body?.status) {
+      req.body.status = normalizeOrderStatus(req.body.status);
+    }
+
     if (req.body?.truck) {
       const truckDoc = await Truck.findOne({ _id: req.body.truck, company: req.user.company });
       if (!truckDoc) {
